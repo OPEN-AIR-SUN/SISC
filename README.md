@@ -98,7 +98,7 @@ Our pre-trained models can be downloaded here:
    </tr>
     <tr>
         <td><b><center>data augmentation</td>    
-        <td>
+        <td width="150">
             <a href="https://drive.google.com/file/d/1emXd-yTPfBf2gBmnggIANxCDg73mnPn5/view?usp=sharing">
                     <center>no aug
             </a>
@@ -189,6 +189,21 @@ Our pre-trained models can be downloaded here:
             </a>
         </td>  
         <td>
+            <a href="https://drive.google.com/file/d/1-rVag5fkg3l1WzvyjS4zpKZQBowkXj7p/view?usp=sharing">
+                    <center>width256 depth5
+            </a>
+        </td> 
+        <td>
+            <a href="https://drive.google.com/file/d/1IW6wUFTej_wBwzSWwFQe5iOT5KXke2Pm/view?usp=sharing">
+                    <center>Gnet relu
+            </a>
+        </td>
+        <td>
+        </td> 
+    </tr>
+    <tr>
+        <td><b><center>point sample</td>    
+        <td>
             <a href="https://drive.google.com/file/d/1qBx3ZKAwRhdZ-BvFsJcUZI1MqPBUli26/view?usp=sharing">
                     <center>on:off=1:2
             </a>
@@ -198,21 +213,6 @@ Our pre-trained models can be downloaded here:
                     <center>on:off=2:3
             </a>
         </td>
-        <td>
-        </td>  
-    </tr>
-    <tr>
-        <td><b><center>point sample</td>    
-        <td>
-            <a href="https://drive.google.com/file/d/1-rVag5fkg3l1WzvyjS4zpKZQBowkXj7p/view?usp=sharing">
-                    <center>width256 depth5
-            </a>
-        </td>  
-        <td>
-            <a href="https://drive.google.com/file/d/1IW6wUFTej_wBwzSWwFQe5iOT5KXke2Pm/view?usp=sharing">
-                    <center>Gnet relu
-            </a>
-        </td>  
         <td>
         </td>  
         <td>
