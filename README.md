@@ -66,25 +66,25 @@ Download the SemanticKITTI dataset from
 
 
 ## Training and inference
-The configuration for training/inference is stored in `opt.yaml`, which can be modified according to the needs.
+The configuration for training/inference is stored in `opt.yaml`, which can be modified as needed.
 
 ### Scene Completion
 
-Run the following command for a certain `task` (train/valid/visualize) with a single GPU:
+Run the following command for a certain `task` (train/valid/visualize):
 
     CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 main_sc.py --task=[task] --experiment_name=[experiment_name]
 
 
 ### Semantic Scene Completion
 #### SSC option A
-Run the following command for a certain `task` (ssc_pretrain/ssc_valid/train/valid/visualize) with a single GPU:
+Run the following command for a certain `task` (ssc_pretrain/ssc_valid/train/valid/visualize):
 
     CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 main_ssc_a.py --task=[task] --experiment_name=[experiment_name]
 
 Here, use ssc_pretrain/ssc_valid to train/validate the SSC part. Then the pre-trained model can be used to further train the whole model.
 
 #### SSC option B
-Run the following command for a certain `task` (train/valid/visualize) with a single GPU:
+Run the following command for a certain `task` (train/valid/visualize):
 
     CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 main_ssc_b.py --task=[task] --experiment_name=[experiment_name]
 
