@@ -342,5 +342,5 @@ Our pre-trained models can be downloaded here:
 </table>
 
 
-The `Scale 4` works as our baseline.
+These models correspond to the ablation study in our paper. The `Scale 4` works as our baseline.
 
