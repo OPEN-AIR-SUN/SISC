@@ -8,15 +8,15 @@ Created by Pengfei Li, Yongliang Shi, Tianyu Liu, Hao Zhao, Guyue Zhou and YA-QI
 
 ![teaser](doc/qualitative.png)
 
-![sup0](doc/qualitative_0.PNG)
+![sup0](doc/qualitative_0.png)
 
-![sup1](doc/qualitative_1.PNG)
+![sup1](doc/qualitative_1.png)
 
-![sup2](doc/qualitative_2.PNG)
+![sup2](doc/qualitative_2.png)
 
-![sup3](doc/qualitative_3.PNG)
+![sup3](doc/qualitative_3.png)
 
-![sup4](doc/qualitative_4.PNG)
+![sup4](doc/qualitative_4.png)
 
 
 ## Introduction
