@@ -6,6 +6,8 @@ Created by Pengfei Li, Yongliang Shi, Tianyu Liu, Hao Zhao, Guyue Zhou and YA-QI
 
 ![demo](doc/demo.gif)
 
+For complete video, click [HERE](https://youtu.be/8x_XOSrr5K0).
+
 ![teaser](doc/qualitative.png)
 
 ![sup0](doc/qualitative_0.png)
