@@ -1,6 +1,6 @@
 # Semi-supervised Implicit Scene Completion from Sparse LiDAR
 
-[**Paper**]() 
+[**Paper**](https://arxiv.org/pdf/2111.14798.pdf) 
 
 Created by Pengfei Li, Yongliang Shi, Tianyu Liu, Hao Zhao, Guyue Zhou and YA-QIN ZHANG from <a href="http://air.tsinghua.edu.cn/EN/" target="_blank">Institute for AI Industry Research(AIR), Tsinghua University</a>.
 
@@ -31,8 +31,14 @@ In this repository, we develop a novel formulation that conditions the semi-supe
 
 If you find our work useful in your research, please consider citing:
 
-\#\#\#to do\#\#\#
-
+    @misc{li2021semisupervised,
+        title={Semi-supervised Implicit Scene Completion from Sparse LiDAR}, 
+        author={Pengfei Li and Yongliang Shi and Tianyu Liu and Hao Zhao and Guyue Zhou and Ya-Qin Zhang},
+        year={2021},
+        eprint={2111.14798},
+        archivePrefix={arXiv},
+        primaryClass={cs.CV}
+    }
 
 ## Installation
 
