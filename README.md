@@ -347,8 +347,276 @@ Our pre-trained models can be downloaded here:
         <td>
         </td>  
     </tr>
+    <tr>
+        <td><b><center>Seg-Net&SSC-Net for SSC-A</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1zDUgd-NSpwaOQ4vKH-K-r_yF66n1OSYj/view?usp=sharing">
+                    <center>ssc_pretrain
+            </a>
+        </td>     
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
 </table>
 
 
 These models correspond to the ablation study in our paper. The `Scale 4` works as our baseline.
+
+<table border="2">
+    <tr>
+        <td style="background-color:green"><center><b>Ablation</td> 
+        <td style="background-color:green" colspan="6"><center><b>Corresponding Configs</td> 
+   </tr>
+    <tr>
+        <td><b><center>data augmentation</td>    
+        <td width="150">
+            <a href="https://drive.google.com/file/d/1CDpWMqX5KGqIQBpboA-9DGPlLDbNxE03/view?usp=sharing">
+                    <center>no aug
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/18sO3s3eGnnabxI3a4yA4ijb1VQ5jteJB/view?usp=sharing">
+                    <center>rotate & flip
+            </a>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>Dnet input</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1UU0gc7s-DEncDhFWEGUmPJo9XnaoJZ4N/view?usp=sharing">
+                    <center>radial distance
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1GaZajOquy4ZNP6Z1e9sftM2YhTLayh_E/view?usp=sharing">
+                    <center>radial distance & height
+            </a>
+        </td> 
+        <td>
+        </td>  
+        <td>
+        </td> 
+        <td>
+        </td> 
+        <td>
+        </td> 
+    </tr>
+    <tr>
+        <td><b><center>Dnet structure</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1iOtUKn3RTBvnvtj9COsqyYVZrrA-r0q-/view?usp=sharing">
+                    <center>last1 pruning
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1VR_i1xTtToxgrdfb2OniXjgnbZQrpOLD/view?usp=sharing">
+                    <center>last2 pruning
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1iCE_6cQasoBZa5SSww4Ke1Ky1B1Ytl7o/view?usp=sharing">
+                    <center>last3 pruning
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1-4p306ZsYpuKAgUFeLaZLmoiojKvCIrv/view?usp=sharing">
+                    <center>last4 pruning
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1sDNYFfazWwEkmKDxQnEDviKQNEapwzUV/view?usp=sharing">
+                    <center>Dnet relu
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1l_fbaHmaGu19QR7iwgJLJsAEj1KNVsJg/view?usp=sharing">
+                    <center>4convs output
+            </a>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>Gnet structure</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1WQ0zYloUFpJkOnugasgI8JUwoiFJTHbT/view?usp=sharing">
+                    <center>width128 depth4
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1LbZT85TJKYuvljr4KEEwxPmW8TOdD-UD/view?usp=sharing">
+                    <center>width512 depth4
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1_4o5t4LJKx5A0j7Oc6YgLQNDMhA3old6/view?usp=sharing">
+                    <center>width256 depth3
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1hb6ObirbJKUQTfws1wRPdTuVhMYDg5cC/view?usp=sharing">
+                    <center>width256 depth5
+            </a>
+        </td> 
+        <td>
+            <a href="https://drive.google.com/file/d/1_fElZNPrxRlnG1mk88E-FbZAqV9Bj6Xr/view?usp=sharing">
+                    <center>Gnet relu
+            </a>
+        </td>
+        <td>
+        </td> 
+    </tr>
+    <tr>
+        <td><b><center>point sample</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1Q6F4od-4aMcJk98V-Yt20POYx3hDkwIU/view?usp=sharing">
+                    <center>on:off=1:2
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1CBYpkw3ras7dt5XKioaDFABinNTuOgZK/view?usp=sharing">
+                    <center>on:off=2:3
+            </a>
+        </td>
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>positional encoding</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1DF-_Kizocc9dyArAYgRrjgjWXUZgDVpX/view?usp=sharing">
+                    <center>no encoding
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1ksFSRjd80mM71SqiymojsxK87-kdzXt6/view?usp=sharing">
+                    <center>incF level10
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1Q8ChxbWU2mXRPv1BMwviX8javh03YmvF/view?usp=sharing">
+                    <center>incT level5
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1paafCI0b8ZmOUnxwtFEPqEyI0HcsHk_f/view?usp=sharing">
+                    <center>incT level15
+            </a>
+        </td>      
+        <td>
+        </td>      
+        <td>
+        </td>      
+    </tr>
+    <tr>
+        <td><b><center>sample strategy</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1BSoA7Veg3Y_lMpkwFUcc3SVafP5qyrpa/view?usp=sharing">
+                    <center>nearest
+            </a>
+        </td>     
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>scale size</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1LYmhl1HfT1YYVbIpxnugvOeNKWaA95QL/view?usp=sharing">
+                    <center>scale 2
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1P_mZcXCdme6BFWBTCpJCNQcKb4Ye5A83/view?usp=sharing">
+                    <center> <b> <u> scale 4
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1vAVno6ZKBwqqSkwhPRnh_f-YtOhbN16g/view?usp=sharing">
+                    <center>scale 8
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1YZK9irwZSBAmCIq6rNCgn8cHrpWor-Jr/view?usp=sharing">
+                    <center>scale 16
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1xkYE_xm--LuT-BRsR92ti1YytmVo2rY_/view?usp=sharing">
+                    <center>scale 32
+            </a>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>shape size</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1lDxWYxLlwP1guHxIkebRieGUOdU9fbg2/view?usp=sharing">
+                    <center>shape 128
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1rltYF8TnzuqmvwAC3a_nzYE4sXyHAlL8/view?usp=sharing">
+                    <center>shape 512
+            </a>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+    <tr>
+        <td><b><center>SSC</td>    
+        <td>
+            <a href="https://drive.google.com/file/d/1agpi1v3tfDzMXq0vzMTbd1lXUYQz1NYT/view?usp=sharing">
+                    <center>SSC option A
+            </a>
+        </td>  
+        <td>
+            <a href="https://drive.google.com/file/d/1WJq8_e298APLKdiY1xolJQcziWTX3yu4/view?usp=sharing">
+                    <center>SSC option B
+            </a>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+        <td>
+        </td>  
+    </tr>
+</table>
 
