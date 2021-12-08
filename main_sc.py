@@ -94,14 +94,14 @@ def eval_single(D_model, G_model, valid_iter, total_steps, iou_score, writer, co
             string_id='target',
         )
 
-        out_cls, targets, sout, shape_out, sigma = D_model(sparse_input, target_key)
+        out_cls, targets, sout, shape_out = D_model(sparse_input, target_key)
         
         shape_out = shape_out.dense( \
             shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-        if config['TRAIN']['normalize'] == True:
+        if config['TRAIN']['shape_normalize'] == True:
             shape_out = F.normalize(shape_out, p=2, dim=1)
 
-        sdf_values = evals.get_discrete_sdf(G_model, shape_out[0])
+        sdf_values = evals.get_discrete_sdf(config, G_model, shape_out[0])
 
         label = eval_info['label'][0]
         mask = eval_info['mask'][0]
@@ -132,7 +132,7 @@ def eval_single(D_model, G_model, valid_iter, total_steps, iou_score, writer, co
 
 
 def train_single_epoch(D_model, G_model, model_params, train_dataloader, valid_dataloader, 
-    optim, loss_fn, epoch, total_steps, iou_score, train_losses, writer, pbar, config):
+    d_optim, g_optim, loss_fn, epoch, total_steps, iou_score, train_losses, writer, pbar, config):
 
     steps_til_eval = config['TRAIN']['steps_til_eval']
     steps_til_summary = config['TRAIN']['steps_til_summary']
@@ -145,6 +145,9 @@ def train_single_epoch(D_model, G_model, model_params, train_dataloader, valid_d
 
     for step, (indices, points, gt, raw_data, in_feat, occupancy) in enumerate(train_dataloader):
         time1 = time.time()
+
+        d_optim.zero_grad()
+        g_optim.zero_grad()
 
         D_model.train()
         G_model.train()
@@ -162,29 +165,26 @@ def train_single_epoch(D_model, G_model, model_params, train_dataloader, valid_d
             string_id="target",
         )
 
-        out_cls, targets, sout, shape_out, sigma = D_model(sparse_input, target_key)
+        out_cls, targets, sout, shape_out = D_model(sparse_input, target_key)
 
         shape_out = shape_out.dense( \
             shape=torch.Size([config['DATA_IO']['train_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-        if config['TRAIN']['normalize'] == True:
+        if config['TRAIN']['shape_normalize'] == True:
             shape_out = F.normalize(shape_out, p=2, dim=1)
 
         ####### G_model train #######
         coords = points['coords'].cuda()
 
-        # bilinear #
-        # shape_out = shape_out.mean(dim=-1)
-        # shape_out = shape_out.squeeze(-1).transpose(2,3) # transpose axis x and y
-        # shapes = F.grid_sample(shape_out, coords[:,:,:2].unsqueeze(2), \
-        #             mode='bilinear', padding_mode='border', align_corners=False)
-        # shapes = shapes.squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
-
         # trilinear #
         shape_out = shape_out.transpose(2,4) # transpose axis x and z
         scaled_coords = coords.clone().detach()
         scaled_coords[:,:,2] = ((scaled_coords[:,:,2] + 1.) / 0.25 - 0.5) * 2.  # coords z located in [-1., -0.75], scale to [-1,1]
-        shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
-                    mode='bilinear', padding_mode='border', align_corners=False)
+        if config['TRAIN']['shape_sample_strategy'] == 'trilinear':
+            shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                        mode='bilinear', padding_mode='border', align_corners=False)
+        else:
+            shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                        mode='nearest', padding_mode='border', align_corners=False)
         shapes = shapes.squeeze(-1).squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
 
         gt = {key: value.cuda() for key, value in gt.items()}
@@ -206,7 +206,8 @@ def train_single_epoch(D_model, G_model, model_params, train_dataloader, valid_d
                 torch.nn.utils.clip_grad_norm_(model_params, max_norm=1.)
             else:
                 torch.nn.utils.clip_grad_norm_(model_params, max_norm=clip_grad)
-        optim.step()
+        d_optim.step()
+        g_optim.step()
 
         if dist.get_rank() == 0:
             writer.add_scalar('training_loss', loss.item(), total_steps)
@@ -242,27 +243,35 @@ def train_pipeline(D_model, G_model, train_dataloader, valid_dataloader, train_s
         writer = 0
 
     epochs = config['TRAIN']['num_epochs']
+    epoch = 0
     lr = config['TRAIN']['lr']
 
     model_params = []
     model_params += D_model.parameters()
     model_params += G_model.parameters()
-    
-    optim = torch.optim.Adam(lr=lr, params=model_params)
+
+    d_optim = torch.optim.Adam(lr=lr, params=D_model.parameters())
+    g_optim = torch.optim.Adam(lr=lr, params=G_model.parameters())
 
     if config['TRAIN']['lr_scheduler']:
-        scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=10, gamma=0.9, last_epoch=-1)
+        d_scheduler = torch.optim.lr_scheduler.StepLR(d_optim, step_size=10, gamma=0.9, last_epoch=-1)
+        g_scheduler = torch.optim.lr_scheduler.StepLR(g_optim, step_size=10, gamma=0.9, last_epoch=-1)
 
     if config['TRAIN']['resume']:
         checkpoint = torch.load(config['TRAIN']['resume_path'], 'cuda')
 
-        optim.load_state_dict(checkpoint['optim'])
-        scheduler.load_state_dict(checkpoint['scheduler'])
+        d_optim.load_state_dict(checkpoint["d_optim"])
+        g_optim.load_state_dict(checkpoint["g_optim"])
+
+        d_scheduler.load_state_dict(checkpoint["d_scheduler"])
+        g_scheduler.load_state_dict(checkpoint["g_scheduler"])
+        
         total_steps = checkpoint['total_steps']
-        epoch = checkpoint['epoch']
+
+        # epoch = checkpoint['epoch']
     else:
         total_steps = 0
-        epoch = 0
+        # epoch = 0
 
     with tqdm(total=len(train_dataloader) * epochs) as pbar:
         if dist.get_rank() == 0:
@@ -279,10 +288,12 @@ def train_pipeline(D_model, G_model, train_dataloader, valid_dataloader, train_s
                     {
                         'D_model': D_model.module.state_dict(),
                         'G_model': G_model.module.state_dict(),
-                        'optim': optim.state_dict(),
-                        'scheduler': scheduler.state_dict(),
+                        'd_optim': d_optim.state_dict(),
+                        'g_optim': g_optim.state_dict(),
+                        'd_scheduler': d_scheduler.state_dict(),
+                        'g_scheduler': g_scheduler.state_dict(),
                         'total_steps': total_steps,
-                        'epoch': epoch,
+                        # 'epoch': epoch,
                     },
                     os.path.join(checkpoints_dir, 'weights_epoch_%04d_steps_%d.pth' % (epoch, total_steps))
                 )
@@ -293,7 +304,7 @@ def train_pipeline(D_model, G_model, train_dataloader, valid_dataloader, train_s
             valid_sampler.set_epoch(epoch)
 
             total_steps, train_losses = train_single_epoch(D_model, G_model, model_params, \
-                                            train_dataloader, valid_dataloader, optim, loss_fn, \
+                                            train_dataloader, valid_dataloader, d_optim, g_optim, loss_fn, \
                                             epoch, total_steps, iou_score, train_losses, writer, pbar, config)
 
             if config['TRAIN']['lr_scheduler']:
@@ -306,10 +317,12 @@ def train_pipeline(D_model, G_model, train_dataloader, valid_dataloader, train_s
                 {
                     'D_model': D_model.module.state_dict(),
                     'G_model': G_model.module.state_dict(),
-                    'optim': optim.state_dict(),
-                    'scheduler': scheduler.state_dict(),
+                    'd_optim': d_optim.state_dict(),
+                    'g_optim': g_optim.state_dict(),
+                    'd_scheduler': d_scheduler.state_dict(),
+                    'g_scheduler': g_scheduler.state_dict(),
                     'total_steps': total_steps,
-                    'epoch': epoch,
+                    # 'epoch': epoch,
                 },
                 os.path.join(checkpoints_dir, 'weights_final.pth')
             )
@@ -348,7 +361,17 @@ def train(opt, config, expr_path):
 
     # model
     D_model = modules.D_Net(config)
-    G_model = modules.G_siren(config)
+    # G_model = modules.G_siren(config)
+    if config['TRAIN']['encode_xyz'] == True:
+        xyz_dim = 3 * (config['TRAIN']['inc_input'] + config['TRAIN']['encode_levels'] * 2)
+    else:
+        xyz_dim = 3
+    G_model = modules.SingleBVPNet(out_features=1,
+                           type=config['TRAIN']['G_TRAIN']['nonlinearity'],
+                           in_features=(xyz_dim+config['TRAIN']['shape_embedding_size']), 
+                           hidden_features=config['TRAIN']['G_TRAIN']['hidden_features'],
+                           num_hidden_layers=config['TRAIN']['G_TRAIN']['num_hidden_layers'],
+                           config=config)
 
     D_model = D_model.cuda()
     G_model = G_model.cuda()
@@ -414,14 +437,14 @@ def valid_pipeline(D_model, G_model, valid_dataloader, model_dir, config):
                     string_id="target",
                 )
 
-                out_cls, targets, sout, shape_out, sigma = D_model(sparse_input, target_key)
+                out_cls, targets, sout, shape_out = D_model(sparse_input, target_key)
 
                 shape_out = shape_out.dense( \
                     shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-                if config['TRAIN']['normalize'] == True:
+                if config['TRAIN']['shape_normalize'] == True:
                     shape_out = F.normalize(shape_out, p=2, dim=1)
 
-                sdf_values = evals.get_discrete_sdf(G_model, shape_out[0])
+                sdf_values = evals.get_discrete_sdf(config, G_model, shape_out[0])
 
                 label = eval_info['label'][0]
                 mask = eval_info['mask'][0]
@@ -479,7 +502,17 @@ def valid(opt, config, expr_path):
 
     # model
     D_model = modules.D_Net(config)
-    G_model = modules.G_siren(config)
+    # G_model = modules.G_siren(config)
+    if config['TRAIN']['encode_xyz'] == True:
+        xyz_dim = 3 * (config['TRAIN']['inc_input'] + config['TRAIN']['encode_levels'] * 2)
+    else:
+        xyz_dim = 3
+    G_model = modules.SingleBVPNet(out_features=1,
+                           type=config['TRAIN']['G_TRAIN']['nonlinearity'],
+                           in_features=(xyz_dim+config['TRAIN']['shape_embedding_size']), 
+                           hidden_features=config['TRAIN']['G_TRAIN']['hidden_features'],
+                           num_hidden_layers=config['TRAIN']['G_TRAIN']['num_hidden_layers'],
+                           config=config)
 
     D_model = D_model.cuda()
     G_model = G_model.cuda()
@@ -535,11 +568,11 @@ def visualize_pipeline(D_model, G_model, dataloader, model_dir, config):
                     string_id="target",
                 )
 
-                out_cls, targets, sout, shape_out, sigma = D_model(sparse_input, target_key)
+                out_cls, targets, sout, shape_out = D_model(sparse_input, target_key)
 
                 shape_out = shape_out.dense( \
                     shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-                if config['TRAIN']['normalize'] == True:
+                if config['TRAIN']['shape_normalize'] == True:
                     shape_out = F.normalize(shape_out, p=2, dim=1)
 
                 raw = eval_info['raw'][0]
@@ -581,7 +614,17 @@ def visualize(opt, config, expr_path):
 
     # model
     D_model = modules.D_Net(config)
-    G_model = modules.G_siren(config)
+    # G_model = modules.G_siren(config)
+    if config['TRAIN']['encode_xyz'] == True:
+        xyz_dim = 3 * (config['TRAIN']['inc_input'] + config['TRAIN']['encode_levels'] * 2)
+    else:
+        xyz_dim = 3
+    G_model = modules.SingleBVPNet(out_features=1,
+                           type=config['TRAIN']['G_TRAIN']['nonlinearity'],
+                           in_features=(xyz_dim+config['TRAIN']['shape_embedding_size']), 
+                           hidden_features=config['TRAIN']['G_TRAIN']['hidden_features'],
+                           num_hidden_layers=config['TRAIN']['G_TRAIN']['num_hidden_layers'],
+                           config=config)
 
     D_model = D_model.cuda()
     G_model = G_model.cuda()

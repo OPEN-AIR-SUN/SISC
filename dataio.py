@@ -75,7 +75,7 @@ def data_augmentation(raw, label, invalid, config):
     if config['DATA_IO']['augmentation']:
         angle = config['DATA_IO']['augmentation_angle']
         theta = random.randint(0, angle * 2) - angle
-        if np.random.rand(1) > 0.5:
+        if config['DATA_IO']['augmentation_flip'] and np.random.rand(1) > 0.5:
             raw = np.flip(raw, axis=1)
             label = np.flip(label, axis=1)
             invalid = np.flip(invalid, axis=1)
@@ -248,12 +248,22 @@ class DG_Dataset(Dataset):
         out_invalid = torch.from_numpy(invalid).long()
 
         out_raw_data = torch.from_numpy(raw_data_sparse).float()
+
+        if self.config['TRAIN']['D_TRAIN']['D_input'] == 'occupancy':
+            out_raw_feat = torch.ones((len(out_raw_data), 1))
+        elif self.config['TRAIN']['D_TRAIN']['D_input'] == 'radial':
+            out_raw_feat = torch.norm(out_raw_data-torch.tensor([0,127.5,0]), p=2, dim=1).reshape(-1,1)
+        elif self.config['TRAIN']['D_TRAIN']['D_input'] == 'radial_height':
+            out_raw_feat = torch.norm(out_raw_data-torch.tensor([0,127.5,0]), p=2, dim=1).reshape(-1,1)
+            z = out_raw_data[:,2].reshape(-1,1)
+            out_raw_feat = torch.cat((out_raw_feat, z), dim=1)
+
         out_occupancy = torch.from_numpy(occupancy_sparse).float()
 
         return idx, \
                {'coords': out_coords}, \
                {'sdf': out_sdf, 'normals': out_normals, 'label': out_label, 'invalid': out_invalid, 'label_points': out_labels_point, 'occ': out_occ},  \
-               {'raw': out_raw_data, 'occupancy': out_occupancy}
+               {'raw': out_raw_data, 'raw_feat': out_raw_feat, 'occupancy': out_occupancy}
 
     def getitem_valid(self, idx):
         # input, label, invalid, mask
@@ -272,10 +282,18 @@ class DG_Dataset(Dataset):
         mask = get_eval_mask(label, invalid)
 
         out_raw_data = torch.from_numpy(raw_data_sparse).float()
+        if self.config['TRAIN']['D_TRAIN']['D_input'] == 'occupancy':
+            out_raw_feat = torch.ones((len(out_raw_data), 1))
+        elif self.config['TRAIN']['D_TRAIN']['D_input'] == 'radial':
+            out_raw_feat = torch.norm(out_raw_data-torch.tensor([0,127.5,0]), p=2, dim=1).reshape(-1,1)
+        elif self.config['TRAIN']['D_TRAIN']['D_input'] == 'radial_height':
+            out_raw_feat = torch.norm(out_raw_data-torch.tensor([0,127.5,0]), p=2, dim=1).reshape(-1,1)
+            z = out_raw_data[:,2].reshape(-1,1)
+            out_raw_feat = torch.cat((out_raw_feat, z), dim=1)
 
         index_info = self.filenames[idx][0]+'_'+self.filenames[idx][1]
         return index_info, \
-               {'raw': out_raw_data}, \
+               {'raw': out_raw_data, 'raw_feat': out_raw_feat}, \
                {'label': label, 'mask': mask}
 
     def __getitem__(self, idx):
@@ -313,7 +331,7 @@ def DG_DataMerge_train(batch):
         out_occ.append(gt['occ'])
 
         out_raw_data.append(raw_occupancy['raw'])
-        out_feature.append(torch.ones((len(raw_occupancy['raw']), 1)))
+        out_feature.append(raw_occupancy['raw_feat'])
         out_occupancy.append(raw_occupancy['occupancy'])
 
     out_coords  = torch.stack(out_coords)
@@ -353,7 +371,7 @@ def DG_DataMerge_valid(batch):
         out_masks.append(eval_info['mask'])
 
         out_raw_data.append(raw_occupancy['raw'])
-        out_feature.append(torch.ones((len(raw_occupancy['raw']), 1)))
+        out_feature.append(raw_occupancy['raw_feat'])
 
         out_occupancy.append(torch.zeros([1,3]))  # no use
 

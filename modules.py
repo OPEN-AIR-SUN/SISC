@@ -170,38 +170,49 @@ class D_Net_shape(nn.Module):
     DEC_CHANNELS = [16, 32, 64, 128, 256, 512]
 
     def __init__(self, config={}):
+        nn.Module.__init__(self)
+
         chunk_size = config['TRAIN']['chunk_size']
         shape_embedding_size = config['TRAIN']['shape_embedding_size']
 
-        nn.Module.__init__(self)
+        self.pruning_choice = config['TRAIN']['D_TRAIN']['pruning_choice']
 
-        # Input sparse tensor must have tensor stride 128.
+        if config['TRAIN']['D_TRAIN']['nonlinearity'] == 'elu':
+            nl = ME.MinkowskiELU()
+        elif config['TRAIN']['D_TRAIN']['nonlinearity'] == 'relu':
+            nl = ME.MinkowskiReLU()
+
+        if config['TRAIN']['D_TRAIN']['D_input'] == 'radial_height':
+            in_channels = 2
+        else:
+            in_channels = 1
+            
         enc_ch = self.ENC_CHANNELS
         dec_ch = self.DEC_CHANNELS
 
         # Encoder
         self.enc_block_s1 = nn.Sequential(
-            ME.MinkowskiConvolution(1, enc_ch[0], kernel_size=3, stride=1, dimension=3),
+            ME.MinkowskiConvolution(in_channels, enc_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s1_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[0], enc_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[0], enc_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s1_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[0], enc_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[0], enc_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_block_s1s2 = nn.Sequential(
@@ -209,28 +220,28 @@ class D_Net_shape(nn.Module):
                 enc_ch[0], enc_ch[1], kernel_size=2, stride=2, dimension=3
             ),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[1], enc_ch[1], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s2_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[1], enc_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[1], enc_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s2_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[1], enc_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[1], enc_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_block_s2s4 = nn.Sequential(
@@ -238,28 +249,28 @@ class D_Net_shape(nn.Module):
                 enc_ch[1], enc_ch[2], kernel_size=2, stride=2, dimension=3
             ),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[2], enc_ch[2], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s4_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[2], enc_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[2], enc_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s4_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[2], enc_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[2], enc_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_block_s4s8 = nn.Sequential(
@@ -267,28 +278,28 @@ class D_Net_shape(nn.Module):
                 enc_ch[2], enc_ch[3], kernel_size=2, stride=2, dimension=3
             ),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[3], enc_ch[3], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s8_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[3], enc_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[3], enc_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s8_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[3], enc_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[3], enc_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_block_s8s16 = nn.Sequential(
@@ -296,28 +307,28 @@ class D_Net_shape(nn.Module):
                 enc_ch[3], enc_ch[4], kernel_size=2, stride=2, dimension=3
             ),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[4], enc_ch[4], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s16_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[4], enc_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[4], enc_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s16_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[4], enc_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[4], enc_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_block_s16s32 = nn.Sequential(
@@ -325,28 +336,28 @@ class D_Net_shape(nn.Module):
                 enc_ch[4], enc_ch[5], kernel_size=2, stride=2, dimension=3
             ),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[5], enc_ch[5], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s32_0 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[5], enc_ch[5], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[5], enc_ch[5], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.enc_res_block_s32_1 = nn.Sequential(
             ME.MinkowskiConvolution(enc_ch[5], enc_ch[5], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(enc_ch[5], enc_ch[5], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(enc_ch[5]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         # Decoder
@@ -359,34 +370,34 @@ class D_Net_shape(nn.Module):
                 dimension=3,
             ),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[4], dec_ch[4], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s16_0 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[4], dec_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[4], dec_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s16_1 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[4], dec_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[4], dec_ch[4], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[4]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
-
-        self.dec_s16_cls = ME.MinkowskiConvolution(
-            dec_ch[4], 1, kernel_size=1, bias=True, dimension=3
-        )
+        if self.pruning_choice[0]:
+            self.dec_s16_cls = ME.MinkowskiConvolution(
+                dec_ch[4], 1, kernel_size=1, bias=True, dimension=3
+            )
 
         self.dec_block_s16s8 = nn.Sequential(
             ME.MinkowskiGenerativeConvolutionTranspose(
@@ -397,33 +408,34 @@ class D_Net_shape(nn.Module):
                 dimension=3,
             ),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[3], dec_ch[3], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s8_0 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[3], dec_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[3], dec_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s8_1 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[3], dec_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[3], dec_ch[3], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[3]),
-            ME.MinkowskiELU(),
+            nl,
         )
-
-        self.dec_s8_cls = ME.MinkowskiConvolution(
-            dec_ch[3], 1, kernel_size=1, bias=True, dimension=3
-        )
+        
+        if self.pruning_choice[1]:
+            self.dec_s8_cls = ME.MinkowskiConvolution(
+                dec_ch[3], 1, kernel_size=1, bias=True, dimension=3
+            )
 
         self.dec_block_s8s4 = nn.Sequential(
             ME.MinkowskiGenerativeConvolutionTranspose(
@@ -434,33 +446,34 @@ class D_Net_shape(nn.Module):
                 dimension=3,
             ),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[2], dec_ch[2], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s4_0 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[2], dec_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[2], dec_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s4_1 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[2], dec_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[2], dec_ch[2], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[2]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
-        self.dec_s4_cls = ME.MinkowskiConvolution(
-            dec_ch[2], 1, kernel_size=1, bias=True, dimension=3
-        )
+        if self.pruning_choice[2]:
+            self.dec_s4_cls = ME.MinkowskiConvolution(
+                dec_ch[2], 1, kernel_size=1, bias=True, dimension=3
+            )
 
         self.dec_block_s4s2 = nn.Sequential(
             ME.MinkowskiGenerativeConvolutionTranspose(
@@ -471,33 +484,34 @@ class D_Net_shape(nn.Module):
                 dimension=3,
             ),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[1], dec_ch[1], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s2_0 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[1], dec_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[1], dec_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s2_1 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[1], dec_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[1], dec_ch[1], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[1]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
-        self.dec_s2_cls = ME.MinkowskiConvolution(
-            dec_ch[1], 1, kernel_size=1, bias=True, dimension=3
-        )
+        if self.pruning_choice[3]:
+            self.dec_s2_cls = ME.MinkowskiConvolution(
+                dec_ch[1], 1, kernel_size=1, bias=True, dimension=3
+            )
 
         self.dec_block_s2s1 = nn.Sequential(
             ME.MinkowskiGenerativeConvolutionTranspose(
@@ -508,48 +522,70 @@ class D_Net_shape(nn.Module):
                 dimension=3,
             ),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[0], dec_ch[0], kernel_size=3, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s1_0 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[0], dec_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[0], dec_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
         self.dec_res_block_s1_1 = nn.Sequential(
             ME.MinkowskiConvolution(dec_ch[0], dec_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
             ME.MinkowskiConvolution(dec_ch[0], dec_ch[0], kernel_size=3, stride=1, dimension=3),
             ME.MinkowskiBatchNorm(dec_ch[0]),
-            ME.MinkowskiELU(),
+            nl,
         )
 
-        self.dec_s1_cls = ME.MinkowskiConvolution(
-            dec_ch[0], 1, kernel_size=1, bias=True, dimension=3
-        )
+        if self.pruning_choice[4]:
+            self.dec_s1_cls = ME.MinkowskiConvolution(
+                dec_ch[0], 1, kernel_size=1, bias=True, dimension=3
+            )
 
         # pruning
         self.pruning = ME.MinkowskiPruning()
 
-        self.se_out = nn.Sequential(
-            ME.MinkowskiConvolution(dec_ch[0], shape_embedding_size // 2, kernel_size=3, dimension=3),
-            ME.MinkowskiBatchNorm(shape_embedding_size // 2),
-            ME.MinkowskiLeakyReLU(),
-            
-            ME.MinkowskiConvolution(shape_embedding_size // 2, shape_embedding_size, kernel_size=3, dimension=3),
-            ME.MinkowskiBatchNorm(shape_embedding_size),
-            ME.MinkowskiLeakyReLU(),
-            
-            ME.MinkowskiAvgPooling(kernel_size=chunk_size, stride=chunk_size, dimension=3),
-        )
+        if config['TRAIN']['D_TRAIN']['output_layers'] == 2:
+            self.se_out = nn.Sequential(
+                ME.MinkowskiConvolution(dec_ch[0], shape_embedding_size // 2, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size // 2),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiConvolution(shape_embedding_size // 2, shape_embedding_size, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiAvgPooling(kernel_size=chunk_size, stride=chunk_size, dimension=3),
+            )
+        elif config['TRAIN']['D_TRAIN']['output_layers'] == 4:
+            self.se_out = nn.Sequential(
+                ME.MinkowskiConvolution(dec_ch[0], shape_embedding_size // 8, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size // 8),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiConvolution(shape_embedding_size // 8, shape_embedding_size // 4, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size // 4),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiConvolution(shape_embedding_size // 4, shape_embedding_size // 2, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size // 2),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiConvolution(shape_embedding_size // 2, shape_embedding_size, kernel_size=3, dimension=3),
+                ME.MinkowskiBatchNorm(shape_embedding_size),
+                ME.MinkowskiLeakyReLU(),
+                
+                ME.MinkowskiAvgPooling(kernel_size=chunk_size, stride=chunk_size, dimension=3),
+            )
 
     def get_target(self, out, target_key, kernel_size=1):
         with torch.no_grad():
@@ -619,19 +655,20 @@ class D_Net_shape(nn.Module):
         dec_res_s16 = self.dec_res_block_s16_1(dec_s16)
         dec_s16 = dec_s16 + dec_res_s16
 
-        dec_s16_cls = self.dec_s16_cls(dec_s16)
+        if self.pruning_choice[0]:
+            dec_s16_cls = self.dec_s16_cls(dec_s16)
 
-        target = self.get_target(dec_s16, target_key)
-        targets.append(target)
-        out_cls.append(dec_s16_cls)
-        keep_s16 = (dec_s16_cls.F > 0).squeeze()
+            target = self.get_target(dec_s16, target_key)
+            targets.append(target)
+            out_cls.append(dec_s16_cls)
+            keep_s16 = (dec_s16_cls.F > 0).squeeze()
 
-        if self.training:
-            keep_s16 += target
+            if self.training:
+                keep_s16 += target
 
-        # Remove voxels s16
-        if keep_s16.sum() > 0:
-            dec_s16 = self.pruning(dec_s16, keep_s16)            
+            # Remove voxels s16
+            if keep_s16.sum() > 0:
+                dec_s16 = self.pruning(dec_s16, keep_s16)            
 
         ##################################################
         # Decoder 16 -> 8
@@ -645,19 +682,20 @@ class D_Net_shape(nn.Module):
         dec_res_s8 = self.dec_res_block_s8_1(dec_s8)
         dec_s8 = dec_s8 + dec_res_s8
 
-        dec_s8_cls = self.dec_s8_cls(dec_s8)
+        if self.pruning_choice[1]:
+            dec_s8_cls = self.dec_s8_cls(dec_s8)
 
-        target = self.get_target(dec_s8, target_key)
-        targets.append(target)
-        out_cls.append(dec_s8_cls)
-        keep_s8 = (dec_s8_cls.F > 0).squeeze()
+            target = self.get_target(dec_s8, target_key)
+            targets.append(target)
+            out_cls.append(dec_s8_cls)
+            keep_s8 = (dec_s8_cls.F > 0).squeeze()
 
-        if self.training:
-            keep_s8 += target
+            if self.training:
+                keep_s8 += target
 
-        # Remove voxels s16
-        if keep_s8.sum() > 0:
-            dec_s8 = self.pruning(dec_s8, keep_s8)
+            # Remove voxels s16
+            if keep_s8.sum() > 0:
+                dec_s8 = self.pruning(dec_s8, keep_s8)
 
         ##################################################
         # Decoder 8 -> 4
@@ -671,19 +709,20 @@ class D_Net_shape(nn.Module):
         dec_res_s4 = self.dec_res_block_s4_1(dec_s4)
         dec_s4 = dec_s4 + dec_res_s4
 
-        dec_s4_cls = self.dec_s4_cls(dec_s4)
+        if self.pruning_choice[2]:
+            dec_s4_cls = self.dec_s4_cls(dec_s4)
 
-        target = self.get_target(dec_s4, target_key)
-        targets.append(target)
-        out_cls.append(dec_s4_cls)
-        keep_s4 = (dec_s4_cls.F > 0).squeeze()
+            target = self.get_target(dec_s4, target_key)
+            targets.append(target)
+            out_cls.append(dec_s4_cls)
+            keep_s4 = (dec_s4_cls.F > 0).squeeze()
 
-        if self.training:
-            keep_s4 += target
+            if self.training:
+                keep_s4 += target
 
-        # Remove voxels s4
-        if keep_s4.sum() > 0:
-            dec_s4 = self.pruning(dec_s4, keep_s4)
+            # Remove voxels s4
+            if keep_s4.sum() > 0:
+                dec_s4 = self.pruning(dec_s4, keep_s4)
 
         ##################################################
         # Decoder 4 -> 2
@@ -697,19 +736,20 @@ class D_Net_shape(nn.Module):
         dec_res_s2 = self.dec_res_block_s2_1(dec_s2)
         dec_s2 = dec_s2 + dec_res_s2
 
-        dec_s2_cls = self.dec_s2_cls(dec_s2)
+        if self.pruning_choice[3]:
+            dec_s2_cls = self.dec_s2_cls(dec_s2)
 
-        target = self.get_target(dec_s2, target_key)
-        targets.append(target)
-        out_cls.append(dec_s2_cls)
-        keep_s2 = (dec_s2_cls.F > 0).squeeze()
+            target = self.get_target(dec_s2, target_key)
+            targets.append(target)
+            out_cls.append(dec_s2_cls)
+            keep_s2 = (dec_s2_cls.F > 0).squeeze()
 
-        if self.training:
-            keep_s2 += target
+            if self.training:
+                keep_s2 += target
 
-        # Remove voxels s2
-        if keep_s2.sum() > 0:
-            dec_s2 = self.pruning(dec_s2, keep_s2)
+            # Remove voxels s2
+            if keep_s2.sum() > 0:
+                dec_s2 = self.pruning(dec_s2, keep_s2)
 
         ##################################################
         # Decoder 2 -> 1
@@ -723,20 +763,21 @@ class D_Net_shape(nn.Module):
         dec_res_s1 = self.dec_res_block_s1_1(dec_s1)
         dec_s1 = dec_s1 + dec_res_s1
 
-        dec_s1_cls = self.dec_s1_cls(dec_s1)
+        if self.pruning_choice[4]:
+            dec_s1_cls = self.dec_s1_cls(dec_s1)
 
-        target = self.get_target(dec_s1, target_key)
-        targets.append(target)
-        out_cls.append(dec_s1_cls)
-        keep_s1 = (dec_s1_cls.F > 0).squeeze()
+            target = self.get_target(dec_s1, target_key)
+            targets.append(target)
+            out_cls.append(dec_s1_cls)
+            keep_s1 = (dec_s1_cls.F > 0).squeeze()
 
-        # Last layer does not require adding the target
-        # if self.training:
-        #     keep_s1 += target
+            # Last layer does not require adding the target
+            # if self.training:
+            #     keep_s1 += target
 
-        # Remove voxels s1
-        if keep_s1.sum() > 0:
-            dec_s1 = self.pruning(dec_s1, keep_s1)
+            # Remove voxels s1
+            if keep_s1.sum() > 0:
+                dec_s1 = self.pruning(dec_s1, keep_s1)
 
         shape_out = self.se_out(dec_s1)
 
@@ -749,20 +790,9 @@ class D_Net(nn.Module):
         self.config = config
         self.shapes = D_Net_shape(config)
 
-        if config['TRAIN']['uncertainty_loss']:
-            self.d_sigma = nn.Parameter(torch.Tensor(1).uniform_(0.2, 1), requires_grad=True)
-            self.g_sigma = nn.Parameter(torch.Tensor(1).uniform_(0.2, 1), requires_grad=True)
-
     def forward(self, partial_in, target_key):
-
         out_cls, targets, sout, shape_out = self.shapes(partial_in, target_key)
-
-        if self.config['TRAIN']['uncertainty_loss']:
-            sigma = [self.d_sigma, self.g_sigma]
-        else:
-            sigma = []
-            
-        return out_cls, targets, sout, shape_out, sigma
+        return out_cls, targets, sout, shape_out
 
 ################### sc ###################
 
@@ -1320,7 +1350,6 @@ class Com_Net(nn.Module):
 
         self.pruning_choice = config['TRAIN']['D_TRAIN']['pruning_choice']
 
-        # Input sparse tensor must have tensor stride 128.
         enc_ch = self.ENC_CHANNELS
         dec_ch = self.DEC_CHANNELS
 
@@ -1889,7 +1918,11 @@ class D_Seg(nn.Module):
         nn.Module.__init__(self)
         self.config = config
 
-        in_channels = 1
+        if self.config['TRAIN']['D_TRAIN']['D_input'] == 'radial_height':
+            in_channels = 2
+        else:
+            in_channels = 1
+
         self.classify = Seg_Net(config, in_channels=in_channels, out_channels=self.config['TRAIN']['class_count'])
 
     def forward(self, data_in):

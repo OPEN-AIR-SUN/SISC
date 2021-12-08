@@ -104,10 +104,10 @@ def eval_single(D_Seg, D_SSC, D_shape, G_siren, valid_dataloader, total_steps, i
         out_cls, targets, shape_out = D_shape(class_out0, target_key)
         shape_out = shape_out.dense( \
             shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-        if config['TRAIN']['normalize'] == True:
+        if config['TRAIN']['shape_normalize'] == True:
             shape_out = F.normalize(shape_out, p=2, dim=1)
 
-        sdf_values = evals.get_discrete_sdf(G_siren, shape_out[0])
+        sdf_values = evals.get_discrete_sdf(config, G_siren, shape_out[0])
 
         label = eval_info['label'][0]
         mask = eval_info['mask'][0]
@@ -257,14 +257,18 @@ def train_single_epoch(D_Seg, D_SSC, D_shape, G_siren, model_params, train_datal
 
             shape_out = shape_out.dense( \
                 shape=torch.Size([config['DATA_IO']['train_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-            if config['TRAIN']['normalize'] == True:
+            if config['TRAIN']['shape_normalize'] == True:
                 shape_out = F.normalize(shape_out, p=2, dim=1)
             # trilinear #
             shape_out = shape_out.transpose(2,4) # transpose axis x and z
             scaled_coords = coords.clone().detach()
             scaled_coords[:,:,2] = ((scaled_coords[:,:,2] + 1.) / 0.25 - 0.5) * 2.  # coords z located in [-1., -0.75], scale to [-1,1]
-            shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
-                        mode='bilinear', padding_mode='border', align_corners=False)
+            if config['TRAIN']['shape_sample_strategy'] == 'trilinear':
+                shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                            mode='bilinear', padding_mode='border', align_corners=False)
+            else:
+                shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                            mode='nearest', padding_mode='border', align_corners=False)
             shapes = shapes.squeeze(-1).squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
 
             g_model_output = G_siren(shapes, coords)
@@ -309,14 +313,18 @@ def train_single_epoch(D_Seg, D_SSC, D_shape, G_siren, model_params, train_datal
         out_cls, targets, shape_out = D_shape(class_out0, target_key)
         shape_out = shape_out.dense( \
             shape=torch.Size([config['DATA_IO']['train_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-        if config['TRAIN']['normalize'] == True:
+        if config['TRAIN']['shape_normalize'] == True:
             shape_out = F.normalize(shape_out, p=2, dim=1)
         # trilinear #
         shape_out = shape_out.transpose(2,4) # transpose axis x and z
         scaled_coords = coords.clone().detach()
         scaled_coords[:,:,2] = ((scaled_coords[:,:,2] + 1.) / 0.25 - 0.5) * 2.  # coords z located in [-1., -0.75], scale to [-1,1]
-        shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
-                    mode='bilinear', padding_mode='border', align_corners=False)
+        if config['TRAIN']['shape_sample_strategy'] == 'trilinear':
+            shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                        mode='bilinear', padding_mode='border', align_corners=False)
+        else:
+            shapes = F.grid_sample(shape_out, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                        mode='nearest', padding_mode='border', align_corners=False)
         shapes = shapes.squeeze(-1).squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
         g_model_output = G_siren(shapes, coords)
 
@@ -580,10 +588,10 @@ def valid_pipeline(D_Seg, D_SSC, D_shape, G_siren, valid_dataloader, model_dir, 
 
                 shape_out = shape_out.dense( \
                     shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-                if config['TRAIN']['normalize'] == True:
+                if config['TRAIN']['shape_normalize'] == True:
                     shape_out = F.normalize(shape_out, p=2, dim=1)
 
-                sdf_values = evals.get_discrete_sdf(G_siren, shape_out[0])
+                sdf_values = evals.get_discrete_sdf(config, G_siren, shape_out[0])
 
                 label = eval_info['label'][0]
                 mask = eval_info['mask'][0]
@@ -1100,7 +1108,7 @@ def visualize_pipeline(D_Seg, D_SSC, D_shape, G_siren, dataloader, model_dir, co
 
                 shape_out = shape_out.dense( \
                     shape=torch.Size([config['DATA_IO']['valid_batch_size'],config['TRAIN']['shape_embedding_size'],x_size,y_size,z_size]))[0]
-                if config['TRAIN']['normalize'] == True:
+                if config['TRAIN']['shape_normalize'] == True:
                     shape_out = F.normalize(shape_out, p=2, dim=1)
 
                 raw = eval_info['raw'][0]

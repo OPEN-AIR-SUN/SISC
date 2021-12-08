@@ -126,7 +126,7 @@ def eval_cd(pred, gt, mask):
     return (cd1 + cd2) * 0.2
 
 
-def get_discrete_sdf(decoder, shape_embedding, N=256, max_batch=64 ** 3):
+def get_discrete_sdf(config, decoder, shape_embedding, N=256, max_batch=64 ** 3):
     '''get discrete sdf from decoder'''
     N = int(N)
     voxel_origin = [-1, -1, -1]
@@ -148,19 +148,16 @@ def get_discrete_sdf(decoder, shape_embedding, N=256, max_batch=64 ** 3):
 
     samples = samples.unsqueeze(0).cuda()
 
-    # bilinear #
-    # shape_embedding = shape_embedding.mean(dim=-1)
-    # shape_embedding = shape_embedding.unsqueeze(0).squeeze(-1).transpose(2,3)
-    # shapes = F.grid_sample(shape_embedding, samples[:,:,:2].unsqueeze(2), \
-    #         mode='bilinear', padding_mode='border', align_corners=False)
-    # shapes = shapes.squeeze(-1).transpose(1,2).to(device)
-
     # trilinear #
     shape_embedding = shape_embedding.unsqueeze(0).transpose(2,4)
     scaled_coords = samples.clone().detach()
     scaled_coords[:,:,2] = ((scaled_coords[:,:,2] + 1.) / 0.25 - 0.5) * 2.  # coords z located in [-1., -0.75], scale to [-1,1]
-    shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
-                mode='bilinear', padding_mode='border', align_corners=False)
+    if config['TRAIN']['shape_sample_strategy'] == 'trilinear':
+        shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                    mode='bilinear', padding_mode='border', align_corners=False)
+    else:
+        shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                    mode='nearest', padding_mode='border', align_corners=False)
     shapes = shapes.squeeze(-1).squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
 
 
@@ -184,7 +181,7 @@ def get_discrete_sdf(decoder, shape_embedding, N=256, max_batch=64 ** 3):
     return sdf_values
 
 
-def get_discrete_sdf_label_dec(G_siren, G_label, shape_embedding, N=256, max_batch=64 ** 3):
+def get_discrete_sdf_label_dec(config, G_siren, G_label, shape_embedding, N=256, max_batch=64 ** 3):
     '''get discrete sdf from decoder'''
     N = int(N)
     voxel_origin = [-1, -1, -1]
@@ -210,8 +207,12 @@ def get_discrete_sdf_label_dec(G_siren, G_label, shape_embedding, N=256, max_bat
     shape_embedding = shape_embedding.unsqueeze(0).transpose(2,4)
     scaled_coords = samples.clone().detach()
     scaled_coords[:,:,2] = ((scaled_coords[:,:,2] + 1.) / 0.25 - 0.5) * 2.  # coords z located in [-1., -0.75], scale to [-1,1]
-    shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
-                mode='bilinear', padding_mode='border', align_corners=False)
+    if config['TRAIN']['shape_sample_strategy'] == 'trilinear':
+        shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                    mode='bilinear', padding_mode='border', align_corners=False)
+    else:
+        shapes = F.grid_sample(shape_embedding, scaled_coords[:,:,:3].unsqueeze(2).unsqueeze(3), \
+                    mode='nearest', padding_mode='border', align_corners=False)
     shapes = shapes.squeeze(-1).squeeze(-1).transpose(1,2).cuda()   # batch_size * point_num * shape_embedding_size
 
     result_sdf = torch.zeros(N*N*(N//8), 1)
@@ -247,7 +248,7 @@ def scene_save_sc(model, shape_embedding, raw, label, mask, config, model_dir, i
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-    sdf_values = get_discrete_sdf(model, shape_embedding, N=256*ratio)
+    sdf_values = get_discrete_sdf(config, model, shape_embedding, N=256*ratio)
 
     iou_out = np.zeros_like(config['EVAL']['eval_threshold'])
     cd_out = np.zeros_like(config['EVAL']['eval_threshold'])
@@ -259,6 +260,8 @@ def scene_save_sc(model, shape_embedding, raw, label, mask, config, model_dir, i
 
         voxel_size = 1.0 / ratio
         voxel_origin = [0, 0, 0]
+
+        sdf_values = abs(sdf_values)    ###
 
         convert_sdf_samples_to_ply(
             sdf_values,
@@ -288,7 +291,7 @@ def scene_save_ssc_a(model, shape_embedding, class_out, raw, label, mask, config
     k_neigh = NearestNeighbors(n_neighbors=1)
     k_neigh.fit(class_out_points)
 
-    sdf_values = get_discrete_sdf(model, shape_embedding)
+    sdf_values = get_discrete_sdf(config, model, shape_embedding)
 
     zero_array = np.zeros(SCALE)
     one_array = np.ones(SCALE)
@@ -341,7 +344,7 @@ def scene_save_ssc_a(model, shape_embedding, class_out, raw, label, mask, config
         mesh_level = config['EVAL']['mesh']['mesh_level']
 
         for ratio in config['EVAL']['mesh']['ratio']:
-            sdf_values = get_discrete_sdf(model, shape_embedding, N=256*ratio)
+            sdf_values = get_discrete_sdf(config, model, shape_embedding, N=256*ratio)
 
             voxel_size = 1.0 / ratio
 
@@ -371,7 +374,7 @@ def scene_save_ssc_b(G_siren, G_label, shape_embedding, raw, label, mask, config
 
     label_iou = label[mask]
 
-    sdf_values, label_values = get_discrete_sdf_label_dec(G_siren, G_label, shape_embedding)
+    sdf_values, label_values = get_discrete_sdf_label_dec(config, G_siren, G_label, shape_embedding)
 
     class_out = label_values.argmax(-1)
     class_out_points = np.transpose((class_out*mask).nonzero())
@@ -429,9 +432,9 @@ def scene_save_ssc_b(G_siren, G_label, shape_embedding, raw, label, mask, config
         mesh_level = config['EVAL']['mesh']['mesh_level']
 
         for ratio in config['EVAL']['mesh']['ratio']:
-            sdf_values, label_values = get_discrete_sdf_label_dec(G_siren, G_label, shape_embedding, N=256*ratio)
+            sdf_values, label_values = get_discrete_sdf_label_dec(config, G_siren, G_label, shape_embedding, N=256*ratio)
 
-            # sdf_values = abs(sdf_values)
+            sdf_values = abs(sdf_values) ###
 
             voxel_size = 1.0 / ratio
 
