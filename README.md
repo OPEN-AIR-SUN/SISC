@@ -8,6 +8,13 @@ Created by Pengfei Li, Yongliang Shi, Tianyu Liu, Hao Zhao, Guyue Zhou and YA-QI
 
 For complete video, click [HERE](https://youtu.be/8x_XOSrr5K0).
 
+We use the proposed model trained on the KITTI dataset to predict implicit completion results on the novel [DAIR-V2X](http://air.tsinghua.edu.cn/dair-v2x/) dataset. The results are impressive:
+
+![china](doc/v2x.jpg)
+![china_1](doc/v2x.gif)
+
+
+
 ![teaser](doc/qualitative.png)
 
 ![sup0](doc/qualitative_0.png)
