@@ -308,7 +308,8 @@ def train_pipeline(D_model, G_model, train_dataloader, valid_dataloader, train_s
                                             epoch, total_steps, iou_score, train_losses, writer, pbar, config)
 
             if config['TRAIN']['lr_scheduler']:
-                scheduler.step()
+                d_scheduler.step()
+                g_scheduler.step()
 
             epoch += 1
 
