@@ -1,5 +1,7 @@
 # Semi-supervised Implicit Scene Completion from Sparse LiDAR
 
+[**New Repo**](https://github.com/AIR-DISCOVER/LODE) 
+
 [**Paper**](https://arxiv.org/pdf/2111.14798.pdf) 
 
 Created by Pengfei Li, Yongliang Shi, Tianyu Liu, Hao Zhao, Guyue Zhou and YA-QIN ZHANG from <a href="http://air.tsinghua.edu.cn/EN/" target="_blank">Institute for AI Industry Research(AIR), Tsinghua University</a>.
